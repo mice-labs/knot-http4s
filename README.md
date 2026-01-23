@@ -1,10 +1,10 @@
-# Chu Http4s
+# Knot Http4s
 
 ## Overview
-Chu is built on top of cats and provides a hierarchical use case for Kleislis.
+Knots for the Http4s ecosystem.
 
 ## Getting Started
 Add the following to your build.sbt:
 ```sbt
-libraryDependencies += "team.mice" %% "chu-http4s" % "{version}"
+libraryDependencies += "team.mice" %% "knot-http4s" % "{version}"
 ```

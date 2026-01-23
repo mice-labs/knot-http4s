@@ -14,8 +14,8 @@ object Dependencies {
   }
 
   object Knot {
-    private val version       = "0.0.2"
-    val core                  = "team.mice" %% "knot-core"        % version
+    private val version = "0.0.2"
+    val core            = "team.mice" %% "knot-core" % version
   }
 
   object FS2 {
@@ -25,7 +25,7 @@ object Dependencies {
 
   object Http4s {
     private val version = "0.23.32"
-    val core = "org.http4s" %% "http4s-core" % version
+    val core            = "org.http4s" %% "http4s-core"   % version
     val client          = "org.http4s" %% "http4s-client" % version
     val circe           = "org.http4s" %% "http4s-circe"  % version
   }
@@ -35,7 +35,7 @@ object Dependencies {
     val core            = "io.circe" %% "circe-core"    % version
     val generic         = "io.circe" %% "circe-generic" % version
     val parser          = "io.circe" %% "circe-parser"  % version
-    val yaml = "io.circe" %% "circe-yaml" % "0.16.1"
+    val yaml            = "io.circe" %% "circe-yaml"    % "0.16.1"
   }
 
   object Jsoniter {
