@@ -1,13 +1,13 @@
-package knot.http4s.util
+package knot.http4s.circe.util
 
 import cats.effect.IO
 import cats.implicits.*
 import cats.laws.discipline.ExhaustiveCheck
-import cats.Id
+import cats.{Eq, Id}
 import fs2.*
-import knot.http4s.util.Fs2Instances.given
+import knot.http4s.circe.util.Fs2Instances.given
 import org.http4s.headers.`Content-Type`
-import org.http4s.{EntityBody, Headers, Media, MediaType}
+import org.http4s.{EntityBody, Headers, Media, MediaRange, MediaType}
 import org.scalacheck.Cogen
 
 object Http4sInstances {

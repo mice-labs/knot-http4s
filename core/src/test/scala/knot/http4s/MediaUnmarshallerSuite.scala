@@ -5,8 +5,9 @@ import cats.{Eq, Id}
 import cats.laws.discipline.*
 import cats.laws.discipline.eq.*
 import cats.laws.discipline.arbitrary.*
-import org.http4s.{Headers, Media, MediaType}
+import org.http4s.{Headers, Media, MediaRange, MediaType}
 import fs2.*
+import knot.fs2.Unpickle
 import org.scalacheck.Arbitrary
 import weaver.SimpleIOSuite
 import weaver.discipline.Discipline
@@ -46,5 +47,81 @@ object MediaUnmarshallerSuite extends SimpleIOSuite with Discipline {
     val fa    = MediaUnmarshaller.shift[Map[String, *], Int](_ => Map("two" -> 2))
     val media = Media[Map[String, *]](Stream.empty, Headers.empty)
     expect.same(fa.run(media), Map("two" -> 2))
+  }
+  test("MediaUnmarshaller: mediaRange mediatype") {
+    val fa = MediaUnmarshaller.mediaRange[IO](
+      MediaType.application.json,
+      MediaType.application.xml
+    )
+    for {
+      r1 <- fa
+        .run(
+          Media[IO](Stream.empty, Headers(`Content-Type`(MediaType.application.json)))
+        )
+        .attempt
+      r2 <- fa
+        .run(
+          Media[IO](Stream.empty, Headers(`Content-Type`(MediaType.application.xml)))
+        )
+        .attempt
+      r3 <- fa
+        .run(
+          Media[IO](Stream.empty, Headers(`Content-Type`(MediaType.image.bmp)))
+        )
+        .attempt
+      r4 <- fa
+        .run(
+          Media[IO](Stream.empty, Headers.empty)
+        )
+        .attempt
+    } yield expect.all(r1.isRight, r2.isRight, r3.isLeft, r4.isLeft)
+  }
+  test("MediaUnmarshaller: mediaRange unmarshaller") {
+    val fa = MediaUnmarshaller.mediaRange(
+      MediaUnmarshaller.unpickleMediaRange(MediaType.application.json)(Unpickle.pure[IO, Int](6)),
+      MediaUnmarshaller.unpickleMediaRange(MediaType.application.xml)(Unpickle.pure[IO, Int](7))
+    )
+    for {
+      r1 <- fa.run(
+        Media[IO](Stream.empty, Headers(`Content-Type`(MediaType.application.json)))
+      )
+      r2 <- fa.run(
+        Media[IO](Stream.empty, Headers(`Content-Type`(MediaType.application.xml)))
+      )
+      r3 <- fa
+        .run(
+          Media[IO](Stream.empty, Headers(`Content-Type`(MediaType.image.bmp)))
+        )
+        .attempt
+    } yield expect.eql(r1, 6) and
+      expect.eql(r2, 7) and
+      expect(r3.isLeft)
+  }
+  test("MediaUnmarshaller: unpickle") {
+    val fa = MediaUnmarshaller.unpickle(Unpickle.pure[IO, Int](5))
+    for {
+      r1 <- fa.run(Media[IO](Stream.empty, Headers(`Content-Type`(MediaType.image.bmp))))
+    } yield expect.eql(r1, 5)
+  }
+  test("MediaUnmarshaller: unpickleMediaRange") {
+    val fa = MediaUnmarshaller.unpickleMediaRange(
+      MediaType.application.json,
+      MediaType.application.xml
+    )(Unpickle.pure[IO, Int](5))
+    for {
+      r1 <- fa.run(
+        Media[IO](Stream.empty, Headers(`Content-Type`(MediaType.application.json)))
+      )
+      r2 <- fa.run(
+        Media[IO](Stream.empty, Headers(`Content-Type`(MediaType.application.xml)))
+      )
+      r3 <- fa
+        .run(
+          Media[IO](Stream.empty, Headers(`Content-Type`(MediaType.image.bmp)))
+        )
+        .attempt
+    } yield expect.eql(r1, 5) and
+      expect.eql(r2, 5) and
+      expect(r3.isLeft)
   }
 }

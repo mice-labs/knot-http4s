@@ -8,11 +8,11 @@ import weaver.SimpleIOSuite
 
 object ImplicitsSuite extends SimpleIOSuite {
   test("Media[F]: unmarshallJson") {
-    given JsonMediaUnmarshaller[IO] =
+    given JsonMediaUnmarshaller[IO, Json] =
       JsonMediaUnmarshaller.json
 
     for {
-      result <- TestMedia.json.unmarshallJson
+      result <- TestMedia.json.unmarshallJson[Json]
       expected = Json.obj("tako" -> "neko".asJson)
     } yield expect.same(result, expected)
   }
