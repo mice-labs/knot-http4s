@@ -4,7 +4,9 @@ import cats.*
 import cats.evidence.As
 import cats.implicits.*
 import knot.Kleisli
-import org.http4s.{EntityDecoder, Media}
+import knot.fs2.Unpickle
+import knot.fs2.implicits.*
+import org.http4s.{EntityDecoder, Media, MediaRange, MediaTypeMismatch, MediaTypeMissing}
 
 trait MediaUnmarshaller[F[_], A] extends Kleisli[F, Media[F], A]:
   override def map[B](f: A => B)(using Functor[F]): MediaUnmarshaller[F, B] =
@@ -44,6 +46,43 @@ object MediaUnmarshaller extends MediaUnmarshallerInstances:
 
   def raiseError[F[_]: ApplicativeThrow, A](e: Throwable): MediaUnmarshaller[F, A] =
     instance(_ => e.raiseError)
+
+  def mediaRange[F[_]: ApplicativeThrow](m1: MediaRange, mn: MediaRange*): MediaUnmarshaller[F, Unit] = {
+    val consumes = (m1 +: mn).toSet
+    instance { m =>
+      m.contentType match {
+        case Some(c) =>
+          ApplicativeThrow[F].raiseUnless(
+            consumes.exists(_.satisfiedBy(c.mediaType))
+          )(MediaTypeMismatch(c.mediaType, consumes))
+        case None =>
+          MediaTypeMissing(consumes).raiseError
+      }
+    }
+  }
+
+  private def mediaRangeP[F[_]: ApplicativeThrow, A](consumes: Set[MediaRange])(
+      f1: MediaUnmarshaller[F, A],
+      fn: MediaUnmarshaller[F, A]*
+  ): MediaUnmarshaller[F, A] =
+    f1.handleErrorWith { case e: MediaTypeMismatch =>
+      if (fn.isEmpty) MediaTypeMismatch(e.messageType, e.expected ++ consumes).raiseError
+      else mediaRangeP(e.expected ++ consumes)(fn.head, fn.tail: _*)
+    }
+
+  def mediaRange[F[_]: ApplicativeThrow, A](
+      f1: MediaUnmarshaller[F, A],
+      fn: MediaUnmarshaller[F, A]*
+  ): MediaUnmarshaller[F, A] =
+    mediaRangeP(Set.empty)(f1, fn: _*)
+
+  def unpickle[F[_], A](fa: Unpickle[F, A]): MediaUnmarshaller[F, A] =
+    instance(_.body.unpickle[A](using fa))
+
+  def unpickleMediaRange[F[_]: ApplicativeThrow, A](m1: MediaRange, mn: MediaRange*)(
+      fa: Unpickle[F, A]
+  ): MediaUnmarshaller[F, A] =
+    mediaRange(m1, mn: _*).productR(unpickle(fa))
 
   given [F[_]: MonadThrow, A](using EntityDecoder[F, A]): MediaUnmarshaller[F, A] =
     m => EntityDecoder[F, A].decode(m, true).rethrowT

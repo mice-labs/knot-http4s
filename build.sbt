@@ -60,7 +60,7 @@ lazy val core = project
     coverageMinimumBranchTotal := 90,
     coverageFailOnMinimum      := true,
     libraryDependencies ++= Seq(
-      Dependencies.Knot.core,
+      Dependencies.Knot.fs2,
       Dependencies.Http4s.core
     ) ++ Seq(
       Dependencies.Weaver.cats,
@@ -81,7 +81,7 @@ lazy val circe = project
     coverageMinimumBranchTotal := 90,
     coverageFailOnMinimum      := true,
     libraryDependencies ++= Seq(
-      Dependencies.Http4s.circe,
+      Dependencies.Knot.fs2Circe,
       Dependencies.Circe.yaml
     ) ++ Seq(
       Dependencies.Weaver.cats,
