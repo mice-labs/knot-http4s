@@ -15,8 +15,8 @@ object Dependencies {
 
   object Knot {
     private val version = "0.0.5"
-    val core            = "team.mice" %% "knot-core" % version
-    val fs2             = "team.mice" %% "knot-fs2" % version
+    val core            = "team.mice" %% "knot-core"      % version
+    val fs2             = "team.mice" %% "knot-fs2"       % version
     val fs2Circe        = "team.mice" %% "knot-fs2-circe" % version
   }
 
